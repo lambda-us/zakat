@@ -1,0 +1,54 @@
+﻿@page "/gold"
+
+<h3>Zakat Calculation for Gold</h3>
+
+<div class="row">
+    <div class="col-md-6">
+
+        <div class="form-group">
+            <label>Total Amount of Gold (gram)</label>
+            <input type="number" class="form-control" @bind="GoldAmount" />
+        </div>
+
+        <div class="form-group">
+            <label>Gold Price Per Gram (US Dollar)</label>
+            <input type="number" class="form-control" @bind="GoldPrice" />
+        </div>
+
+        <br />
+
+        <button class="btn btn-primary" @onclick="Calculate">Calculate</button>
+
+    </div>
+
+    <div class="col-md-6">
+
+        <h4>Results</h4>
+
+        <p><b>Total Gold Value:</b> @GoldValue.ToString("C")</p>
+        <p><b>Total Zakatable Amount:</b> @ZakatableAmount.ToString("C")</p>
+        <p><b>Total Zakat (2.5%):</b> @TotalZakat.ToString("C")</p>
+
+    </div>
+</div>
+
+@code {
+
+    double GoldAmount;
+    double GoldPrice;
+
+    double GoldValue;
+    double ZakatableAmount;
+    double TotalZakat;
+
+    void Calculate()
+    {
+        GoldValue = GoldAmount * GoldPrice;
+        ZakatableAmount = GoldValue;
+
+        if (ZakatableAmount < 0)
+            ZakatableAmount = 0;
+
+        TotalZakat = ZakatableAmount * 0.025;
+    }
+}

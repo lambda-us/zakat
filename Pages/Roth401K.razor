@@ -1,0 +1,124 @@
+﻿@page "/roth401k"
+
+<h3>Zakat Calculation for Roth 401K</h3>
+
+<div class="row">
+    <div class="col-md-6">
+
+        <div class="form-group">
+            <label>Roth 401K Total Balance</label>
+            <input type="number" class="form-control" @bind="Roth401KBalance" />
+        </div>
+
+        <div class="form-group">
+            <label>Roth 401K Total Profit</label>
+            <input type="number" class="form-control" @bind="Roth401KProfit" />
+        </div>
+
+        <div class="form-group">
+            <label>If you want, can you cash out your Roth 401K?</label>
+            <Text>Some 401K cash out depends on company policy - please check with your company.</Text>
+            <InputSelect class="form-control" @bind-Value="CashOut">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </InputSelect>
+        </div>
+
+        <div class="form-group">
+            <label>Is your age 59 and half or more?</label>
+            <InputSelect class="form-control" @bind-Value="Over59">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </InputSelect>
+        </div>
+
+        <div class="form-group">
+            <label>Have you held the Roth 401K account for at least five years?</label>
+            <InputSelect class="form-control" @bind-Value="AccountAgeRoth401K">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </InputSelect>
+        </div>
+
+        <div class="form-group">
+            <label>Yearly Federal Tax Rate (%)</label>
+            <input type="number" class="form-control" @bind="FedTaxRate" />
+        </div>
+
+        <div class="form-group">
+            <label>Yearly State Tax Rate (%)</label>
+            <input type="number" class="form-control" @bind="StateTaxRate" />
+        </div>
+
+        <br />
+
+        <button class="btn btn-primary" @onclick="Calculate">Calculate</button>
+
+    </div>
+
+    <div class="col-md-6">
+
+        <h4>Results</h4>
+
+        <p><b>Total Balance After Penalty:</b> @PenaltyBalance.ToString("C")</p>
+        <p><b>Total Balance After Tax:</b> @AfterTaxBalance.ToString("C")</p>
+        <p><b>Total Zakatable Amount:</b> @ZakatableAmount.ToString("C")</p>
+        <p><b>Total Zakat (2.5%):</b> @TotalZakat.ToString("C")</p>
+
+    </div>
+</div>
+
+@code {
+
+    double Roth401KBalance;
+    double Roth401KProfit;
+    bool CashOut;
+    bool Over59;
+    bool AccountAgeRoth401K;
+
+    double FedTaxRate;
+    double StateTaxRate;
+
+    double PenaltyBalance;
+    double AfterTaxBalance;
+    double ZakatableAmount;
+    double TotalZakat;
+
+    void Calculate()
+    {
+        double taxRateDecimal = (FedTaxRate + StateTaxRate) / 100.0;
+
+        if(CashOut)
+        {
+            double tax = 0;
+            if(Over59 && AccountAgeRoth401K)
+            {
+                PenaltyBalance = Roth401KBalance;
+            }
+            else
+            {
+                PenaltyBalance = (Roth401KBalance - Roth401KProfit) + (Roth401KProfit * 0.90);
+                tax = Roth401KProfit * taxRateDecimal;
+            }
+
+            AfterTaxBalance = PenaltyBalance - tax;
+
+            ZakatableAmount = AfterTaxBalance;
+
+            if (ZakatableAmount < 0)
+                ZakatableAmount = 0;
+
+            TotalZakat = ZakatableAmount * 0.025;
+        }
+        else
+        {
+            PenaltyBalance = Roth401KBalance * 0;
+            AfterTaxBalance = PenaltyBalance;
+            ZakatableAmount = AfterTaxBalance;
+            if (ZakatableAmount < 0)
+                ZakatableAmount = 0;
+            TotalZakat = ZakatableAmount * 0.025;
+        }
+
+    }
+}

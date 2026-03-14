@@ -1,0 +1,198 @@
+﻿@page "/zakatcalculator"
+
+<h3>Zakat Calculator</h3>
+
+<div class="row">
+    <div class="col-md-6">
+
+        <div class="form-group">
+            <label>Is your age 59 and half or more?</label>
+            <InputSelect class="form-control" @bind-Value="Over59">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </InputSelect>
+        </div>
+
+        <div class="form-group">
+            <label>Regular 401K Balance</label>
+            <input type="number" class="form-control" @bind="Regular401K" />
+        </div>
+
+        <div class="form-group">
+            <label>IRA Balance</label>
+            <input type="number" class="form-control" @bind="IRA" />
+        </div>
+
+        <div class="form-group">
+            <label>Roth 401K Total Balance</label>
+            <input type="number" class="form-control" @bind="Roth401K" />
+        </div>
+
+        <div class="form-group">
+            <label>Roth 401K Profit</label>
+            <input type="number" class="form-control" @bind="Roth401KProfit" />
+        </div>
+
+        <div class="form-group">
+            <label>Have you held the Roth 401K account for at least five years?</label>
+            <InputSelect class="form-control" @bind-Value="AccountAgeRoth401K">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </InputSelect>
+        </div>
+
+        <div class="form-group">
+            <label>Roth IRA Total Balance</label>
+            <input type="number" class="form-control" @bind="RothIRA" />
+        </div>
+
+        <div class="form-group">
+            <label>Roth IRA Profit</label>
+            <input type="number" class="form-control" @bind="RothIRAProfit" />
+        </div>
+
+        <div class="form-group">
+            <label>Have you held the Roth IRA account for at least five years?</label>
+            <InputSelect class="form-control" @bind-Value="AccountAgeRothIRA">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </InputSelect>
+        </div>
+
+        <div class="form-group">
+            <label>Brokerage Account Balance</label>
+            <input type="number" class="form-control" @bind="Brokerage" />
+        </div>
+
+        <div class="form-group">
+            <label>Brokerage Account Profit</label>
+            <input type="number" class="form-control" @bind="BrokerageProfit" />
+        </div>
+
+        <div class="form-group">
+            <label>Gold</label>
+            <input type="number" class="form-control" @bind="Gold" />
+        </div>
+
+        <div class="form-group">
+            <label>Cash</label>
+            <input type="number" class="form-control" @bind="Cash" />
+        </div>
+
+        <div class="form-group">
+            <label>Total Yearly Loan Payment</label>
+            <input type="number" class="form-control" @bind="LoanPayment" />
+        </div>
+
+        <div class="form-group">
+            <label>Federal Tax Rate (%)</label>
+            <input type="number" class="form-control" @bind="FedTaxRate" />
+        </div>
+
+        <div class="form-group">
+            <label>State Tax Rate (%)</label>
+            <input type="number" class="form-control" @bind="StateTaxRate" />
+        </div>
+
+        <br />
+
+        <button class="btn btn-primary" @onclick="Calculate">Calculate</button>
+
+    </div>
+
+    <div class="col-md-6">
+
+        <h4>Results</h4>
+
+        <p><b>Total Balance:</b> @TotalBalance.ToString("C")</p>
+        <p><b>Total Penalty:</b> @Penalty.ToString("C")</p>
+        <p><b>Total Balance After 10% Penalty:</b> @PenaltyBalance.ToString("C")</p>
+        <p><b>Total Tax:</b> @Tax.ToString("C")</p>
+        <p><b>Total Balance After Tax:</b> @AfterTaxBalance.ToString("C")</p>
+        <p><b>Total Zakatable Amount:</b> @ZakatableAmount.ToString("C")</p>
+        <p><b>Total Zakat (2.5%):</b> @TotalZakat.ToString("C")</p>
+
+    </div>
+</div>
+
+@code {
+
+    bool Over59;
+    double Regular401K;
+    double IRA;
+    double Roth401K;
+    double Roth401KProfit;
+    bool AccountAgeRoth401K;
+    double RothIRA;
+    double RothIRAProfit;
+    bool AccountAgeRothIRA;
+    double Brokerage;
+    double BrokerageProfit;
+    double Gold;
+    double Cash;
+    double LoanPayment;
+    double FedTaxRate;
+    double StateTaxRate;
+
+    Double TotalBalance;
+    Double Penalty;
+    Double Tax;
+    double PenaltyBalance;
+    double AfterTaxBalance;
+    double ZakatableAmount;
+    double TotalZakat;
+
+    void Calculate()
+    {
+        TotalBalance = Regular401K + IRA + Roth401K + RothIRA + Brokerage + Gold + Cash;
+        // Calculate penalty and tax for Retirement Accounts
+        double taxRateDecimal = (FedTaxRate + StateTaxRate) / 100.0;
+        double taxDeferredRetirementTotal;
+        double roth401kRetirementTotal;
+        double rothIRARetirementTotal;
+        Tax = (Regular401K + IRA + BrokerageProfit) * taxRateDecimal;
+
+        
+        if(Over59)
+        {
+            taxDeferredRetirementTotal =  Regular401K + IRA;
+        }
+        else
+        {
+            taxDeferredRetirementTotal = (Regular401K * 0.90) + (IRA * 0.90);
+        }
+
+        if(Over59 && AccountAgeRoth401K)
+        {
+            roth401kRetirementTotal = Roth401K;
+        }
+        else
+        {
+            roth401kRetirementTotal = (Roth401K - Roth401KProfit) + (Roth401KProfit * 0.90);
+            Tax += Roth401KProfit * taxRateDecimal;
+        }
+
+        if(Over59 || AccountAgeRothIRA)
+        {
+            rothIRARetirementTotal = RothIRA;
+        }
+        else
+        {
+            rothIRARetirementTotal = (RothIRA - RothIRAProfit) + (RothIRAProfit * 0.90);
+            Tax += RothIRAProfit * taxRateDecimal;
+        }
+
+        PenaltyBalance = taxDeferredRetirementTotal + roth401kRetirementTotal + rothIRARetirementTotal + Brokerage + Gold + Cash;
+
+        Penalty = TotalBalance - PenaltyBalance;
+
+        AfterTaxBalance = PenaltyBalance - Tax;
+
+        ZakatableAmount = AfterTaxBalance - LoanPayment;
+
+        if (ZakatableAmount < 0)
+            ZakatableAmount = 0;
+
+        TotalZakat = ZakatableAmount * 0.025;
+    }
+}
