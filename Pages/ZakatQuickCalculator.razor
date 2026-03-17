@@ -111,12 +111,18 @@
         <p><b>Total Balance After Tax:</b> @AfterTaxBalance.ToString("C")</p>
         <p><b>Total Zakatable Amount:</b> @ZakatableAmount.ToString("C")</p>
         <p><b>Total Zakat (2.5%):</b> @TotalZakat.ToString("C")</p>
-
+        @if (showResult)
+        {
+        <button @onclick="ResetInputs">Reset</button>
+        }
     </div>
 </div>
 
+
+
 @code {
 
+    bool showResult = false;
     bool Over59;
     double Regular401K;
     double IRA;
@@ -134,65 +140,79 @@
     double FedTaxRate;
     double StateTaxRate;
 
-    Double TotalBalance;
-    Double Penalty;
-    Double Tax;
-    double PenaltyBalance;
-    double AfterTaxBalance;
-    double ZakatableAmount;
-    double TotalZakat;
+    double TotalBalance = 0;
+    double Penalty = 0;
+    double Tax = 0;
+    double PenaltyBalance = 0;
+    double AfterTaxBalance = 0;
+    double ZakatableAmount = 0;
+    double TotalZakat = 0;
 
     void Calculate()
     {
-        TotalBalance = Regular401K + IRA + Roth401K + RothIRA + Brokerage + Gold + Cash;
-        // Calculate penalty and tax for Retirement Accounts
-        double taxRateDecimal = (FedTaxRate + StateTaxRate) / 100.0;
-        double taxDeferredRetirementTotal;
-        double roth401kRetirementTotal;
-        double rothIRARetirementTotal;
-        Tax = (Regular401K + IRA + BrokerageProfit) * taxRateDecimal;
+         double totalBalance = Regular401K + IRA + Roth401K + RothIRA + Brokerage + Gold + Cash;
 
-        
-        if(Over59)
-        {
-            taxDeferredRetirementTotal =  Regular401K + IRA;
-        }
-        else
-        {
-            taxDeferredRetirementTotal = (Regular401K * 0.90) + (IRA * 0.90);
-        }
+         double taxRateDecimal = (FedTaxRate + StateTaxRate) / 100.0;
+         double penaltyRateDecimal = 0.10;
 
-        if(Over59 && AccountAgeRoth401K)
-        {
-            roth401kRetirementTotal = Roth401K;
-        }
-        else
-        {
-            roth401kRetirementTotal = (Roth401K - Roth401KProfit) + (Roth401KProfit * 0.90);
-            Tax += Roth401KProfit * taxRateDecimal;
-        }
+         double tax = (Regular401K + IRA) * taxRateDecimal;
+         double penalty = 0;
 
-        if(Over59 || AccountAgeRothIRA)
-        {
-            rothIRARetirementTotal = RothIRA;
-        }
-        else
-        {
-            rothIRARetirementTotal = (RothIRA - RothIRAProfit) + (RothIRAProfit * 0.90);
-            Tax += RothIRAProfit * taxRateDecimal;
-        }
+         if (!Over59)
+         {
+             penalty = (Regular401K + IRA) * penaltyRateDecimal;
+         }
 
-        PenaltyBalance = taxDeferredRetirementTotal + roth401kRetirementTotal + rothIRARetirementTotal + Brokerage + Gold + Cash;
+         if ((!Over59 || !AccountAgeRoth401K) && Roth401KProfit > 0)
+         {
+             penalty += Roth401KProfit * penaltyRateDecimal;
+             tax += Roth401KProfit * taxRateDecimal;
+         }
 
-        Penalty = TotalBalance - PenaltyBalance;
+         if ((!Over59 || !AccountAgeRothIRA) && RothIRAProfit > 0)
+         {
+             penalty += RothIRAProfit * penaltyRateDecimal;
+             tax += RothIRAProfit * taxRateDecimal;
+         }
 
-        AfterTaxBalance = PenaltyBalance - Tax;
+         if (BrokerageProfit > 0)
+         {
+             tax += BrokerageProfit * taxRateDecimal;
+         }
 
-        ZakatableAmount = AfterTaxBalance - LoanPayment;
+         double penaltyBalance = totalBalance - penalty;
+         double afterTaxBalance = penaltyBalance - tax;
+         double zakatableAmount = Math.Max(0, afterTaxBalance - LoanPayment);
 
-        if (ZakatableAmount < 0)
-            ZakatableAmount = 0;
+         if (zakatableAmount < 0)
+         zakatableAmount = 0;
 
-        TotalZakat = ZakatableAmount * 0.025;
+         double totalZakat = zakatableAmount * 0.025;
+
+         // Assign once at the end (UI updates cleanly)
+         TotalBalance = totalBalance;
+         Penalty = penalty;
+         Tax = tax;
+         PenaltyBalance = penaltyBalance;
+         AfterTaxBalance = afterTaxBalance;
+         ZakatableAmount = zakatableAmount;
+         TotalZakat = totalZakat;
+
+         showResult = true;
+    }
+
+    void ResetInputs()
+    {
+        Regular401K = 0;
+        IRA = 0;
+        Roth401K = 0;
+        Roth401KProfit = 0;
+        RothIRA = 0;
+        RothIRAProfit = 0;
+        Brokerage = 0;
+        BrokerageProfit = 0;
+        Gold = 0;
+        Cash = 0;
+        LoanPayment = 0;
     }
 }
